@@ -8,23 +8,7 @@
 
 using namespace std;
 
-// Write C++ code here.
-//
-// Do not forget to dynamically load the C++ library into your application.
-//
-// For instance,
-//
-// In MainActivity.java:
-//    static {
-//       System.loadLibrary("selinux");
-//    }
-//
-// Or, in MainActivity.kt:
-//    companion object {
-//      init {
-//         System.loadLibrary("selinux")
-//      }
-//    }
+
 int selinuxStatusChecker();
 
 int checkProperty(const char *key, const char *value2check);
@@ -38,7 +22,7 @@ Java_com_personal_selinux_MainActivity_selinuxStatusChecker(JNIEnv *env, jobject
 
 int selinuxStatusChecker() {
     int result = 0;
-    try {
+
         FILE *file = fopen("/sys/fs/selinux/enforce",
                            "r"); // on systems that have sysfs mounted, the mount point is /sys/fs/selinux
         char *line = (char *) calloc(50, sizeof(char));
@@ -48,7 +32,6 @@ int selinuxStatusChecker() {
             __android_log_print(ANDROID_LOG_VERBOSE, "JNI simple app",
                                 " ---- Unable to read the enforce file");
             result = 2;
-//            throw std::runtime_error("Unable to open enforce file");
             return result;
         }
         while (fgets(line, 50, file)) {
@@ -62,10 +45,7 @@ int selinuxStatusChecker() {
         }
         if (line) { free(line); }
         fclose(file);
-    } catch (const std::exception& e) {
-        __android_log_print(ANDROID_LOG_ERROR, "JNI", "%s", e.what());
 
-    }
     return result;
 }
 

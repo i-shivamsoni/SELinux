@@ -63,52 +63,44 @@ public class MainActivity extends AppCompatActivity {
         int selinuxStatus = selinuxStatusChecker();
         Log.d("JNI simple app", "SELinux Status: " + selinuxStatus);
 
-setenforce 0
-output
-2023-10-13 20:32:14.799 16806-16806 JNI simple app           V   ---- NOT ENFORCING
-2023-10-13 20:32:14.799 16806-16806 libc                     A  Fatal signal 4 (SIGILL), code 2 (ILL_ILLOPN), fault addr 0xc9cd27dc in tid 16806 (m.c0c0n.selinux), pid 16806 (m.c0c0n.selinux)
-2023-10-13 20:32:14.797 16806-16806 m.c0c0n.selinux          I  type=1400 audit(0.0:950): avc: denied { read } for name="enforce" dev="selinuxfs" ino=4 scontext=u:r:untrusted_app:s0:c156,c256,c512,c768 tcontext=u:object_r:selinuxfs:s0 tclass=file permissive=1 app=com.c0c0n.selinux
-
-setenforce 1
-2023 - 10 - 13 20:41:16.549 0 JNI simple app V ----Unable to read the enforce file
-2023 - 10 - 13 20:41:16.549 0 JNI E Unable to open enforce file
-2023 - 10 - 13 20:41:16.549 0 libc A Fatal signal 4 (SIGILL), code 2(ILL_ILLOPN), fault addr 0xc98977dc in tid 17166 (m.c0c0n.selinux), pid 17166
-        (m.c0c0n.selinux)
  */
 
 
-//        String status = executeCommandAndGetOutput("/system/bin/cat /sys/fs/selinux/enforce");
-        /*
+        SelinuxfetchbyCat();
 
+
+    }
+
+    private String SelinuxfetchbyCat() {
         String status = null;
-        try {
-            status = Selinux("/system/bin/cat /sys/fs/selinux/enforce");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        status = Selinux("/system/bin/cat /sys/fs/selinux/enforce");
 
 
         Log.d("SELinux-result", "onCreate: out " + status);
         if (status.contains("0")) {
-            Log.d("SELinux-result", " then SELinux is disabled");
+            Log.d("SELinux-result", " then SELinux is disabled / Permissive");
+            status = " then SELinux is disabled / Permissive";
         } else if (status.contains("")) {
-            Log.d("SELinux-result", " then SELinux is enabled");
+            status = " then SELinux is enabled / Enforcing";
+            Log.d("SELinux-result", " then SELinux is enabled / Enforcing");
         }
-         */
+        return status;
+    }
 
-        try {
-            String result = Selinux("getenforce");
-            if (result.contains("Permissive")) {
-                Log.d("result", "onCreate: " + "Permissive");
-            } else {
-                Log.d("result", "onCreate: " + "Enforcing");
-            }
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+    private String SELinuxfecth() {
+        String result = null;
+
+        String output = Selinux("getenforce");
+        // String output = executeCommandAndGetOutput("/system/bin/cat /sys/fs/selinux/enforce");
+        if (output.contains("Permissive")) {
+            result = "Permissive";
+            Log.d("output", "onCreate: " + "Permissive");
+        } else {
+            result = "Enforcing";
+            Log.d("output", "onCreate: " + "Enforcing");
         }
 
+        return result;
     }
 
     public final String executeCommandAndGetOutput(String command) {
@@ -132,24 +124,26 @@ setenforce 1
         }
     }
 
-    String Selinux(String Command) throws IOException, InterruptedException {
-        Process process = Runtime.getRuntime().exec(Command);
+    String Selinux(String Command) {
+        try {
+            Process process = Runtime.getRuntime().exec(Command);
 
-        // Reads stdout.
-        // NOTE: You can write to stdin of the command using
-        // process.getOutputStream().
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        int read;
-        char[] buffer = new char[4096];
-        output = new StringBuffer();
-        while ((read = reader.read(buffer)) > 0) {
-            output.append(buffer, 0, read);
+            // Reads stdout.
+            // NOTE: You can write to stdin of the command using
+            // process.getOutputStream().
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            int read;
+            char[] buffer = new char[4096];
+            output = new StringBuffer();
+            while ((read = reader.read(buffer)) > 0) {
+                output.append(buffer, 0, read);
+            }
+            reader.close();
+            // Waits for the command to finish.
+            process.waitFor();
+            return output.toString();
+        } catch (Exception ex) {
+            return null;
         }
-        reader.close();
-        // Waits for the command to finish.
-        process.waitFor();
-
-
-        return output.toString();
     }
 }
